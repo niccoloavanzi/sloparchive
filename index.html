@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLOPARCHIVE.COM // NULL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #f4f4f4;
+            --text-color: #000000;
+            --accent-color: #0000ff; /* Hyper Blue */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Space Mono', monospace;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden; /* No scrolling allowed */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: help; /* Confusing cursor */
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* WRAPPER FOR MELTING CONTENT */
+        /* We wrap everything visible in this so we can melt it separately from the final message */
+        .content-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform-style: preserve-3d;
+        }
+
+        /* The Ghost Image (Hidden by default) */
+        .ghost-slop {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 500px;
+            background-image: url('https://placehold.co/400x500/000/FFF?text=SLOP_DATA_01'); 
+            background-size: cover;
+            opacity: 0;
+            z-index: 0;
+            transition: opacity 0.1s;
+            pointer-events: none;
+            mix-blend-mode: exclusion;
+        }
+
+        /* Corner Text (The nonsense) */
+        .corner {
+            position: fixed;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+        }
+
+        .tl { top: 20px; left: 20px; }
+        .tr { top: 20px; right: 20px; text-align: right; }
+        .bl { bottom: 20px; left: 20px; }
+        .br { bottom: 20px; right: 20px; text-align: right; }
+
+        /* Footer Buy Link */
+        .footer-buy {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .footer-buy a {
+            color: var(--text-color);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--text-color);
+            font-size: 12px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .footer-buy a:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* The Main Statement */
+        .hero-container {
+            z-index: 10;
+            text-align: center;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+
+        h1 {
+            font-size: clamp(30px, 6vw, 80px);
+            font-weight: 400;
+            line-height: 1.1;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        h1 span {
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+
+        h1:hover span:nth-child(odd) { transform: translateY(-10px); }
+        h1:hover span:nth-child(even) { transform: translateY(10px); }
+
+        /* The Button */
+        .btn-minimal {
+            display: inline-block;
+            border: 1px solid var(--text-color);
+            padding: 20px 40px;
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 14px;
+            letter-spacing: 2px;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .btn-minimal:hover {
+            background: var(--text-color);
+            color: var(--bg-color);
+            padding: 20px 60px;
+        }
+
+        .btn-minimal::before { content: "["; margin-right: 10px; }
+        .btn-minimal::after { content: "]"; margin-left: 10px; }
+
+        /* Invert Effect on Body Hover */
+        body:hover .ghost-slop { opacity: 0.1; }
+
+        /* Glitch Animation */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .blink { animation: blink 2s infinite steps(1); }
+
+        /* --- MELTING ANIMATION --- */
+        @keyframes melt-down {
+            0% {
+                transform: scaleY(1) translateY(0);
+                filter: blur(0px) contrast(100%);
+                opacity: 1;
+            }
+            30% {
+                transform: scaleY(1.2) translateY(5vh);
+                filter: blur(2px) contrast(120%);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scaleY(4) translateY(100vh);
+                filter: blur(20px) contrast(200%) hue-rotate(90deg);
+                opacity: 0;
+            }
+        }
+
+        .is-melting {
+            animation: melt-down 6s forwards cubic-bezier(0.6, 0.05, 0.2, 1);
+            pointer-events: none; 
+        }
+
+        /* --- BUY MODAL --- */
+        .buy-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(244, 244, 244, 0.95);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .buy-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .buy-form-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid var(--text-color);
+            background: var(--bg-color);
+        }
+
+        .close-modal {
+            float: right;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .buy-form input, .buy-form textarea {
+            width: 100%;
+            box-sizing: border-box;
+            background: transparent;
+            border: 1px solid #ccc;
+            border-radius: 0;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+        }
+
+        .buy-form input:focus, .buy-form textarea:focus {
+            outline: none;
+            border-color: #000;
+        }
+
+        .buy-form button {
+            width: 100%;
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 15px;
+            font-family: 'Space Mono', monospace;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .buy-form button:hover {
+            background: var(--accent-color);
+        }
+        
+        /* Domain List Style */
+        .domain-list {
+            margin-bottom: 25px;
+            font-size: 12px;
+            opacity: 0.8;
+            line-height: 1.6;
+            border-left: 2px solid var(--text-color);
+            padding-left: 10px;
+        }
+
+        /* --- FINAL MESSAGE --- */
+        .final-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2s ease;
+        }
+        
+        .final-message.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .final-message h2 {
+            font-size: clamp(20px, 4vw, 40px);
+            font-weight: 400;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- WRAPPER FOR CONTENT THAT MELTS -->
+    <div class="content-wrapper" id="content-wrapper">
+        
+        <div class="ghost-slop"></div>
+
+        <div class="corner tl">
+            SLOPARCHIVE.COM<br>
+            Status: <span class="blink">LEAKING</span>
+        </div>
+
+        <div class="corner tr">
+            Do not feed the algorithm.<br>
+            Monday is cancelled.
+        </div>
+
+        <div class="corner bl">
+            Obj: 665-A<br>
+            The pixels are wet.
+        </div>
+
+        <div class="corner br">
+            Your eyes are safe here.<br>
+            (Lie).
+        </div>
+
+        <div class="hero-container">
+            <h1>
+                <span>WE</span> <span>HARVEST</span><br>
+                <span>THE</span> <span>DIGITAL</span> <span>UGLY.</span>
+            </h1>
+
+            <p style="font-size: 14px; margin-bottom: 50px; opacity: 0.5;">
+                The museum of things that should not exist. <br>
+                Data rot. Visual noise. Hallucinations.
+            </p>
+
+            <a href="#" class="btn-minimal" id="consume-btn">CONSUME</a>
+        </div>
+
+        <div class="footer-buy">
+            <a id="buy-link">Wanna buy me?</a>
+        </div>
+
+    </div>
+    <!-- END WRAPPER -->
+
+    <!-- FINAL MESSAGE (Outside Wrapper so it doesn't melt) -->
+    <div class="final-message" id="final-msg">
+        <div>
+            <h2>Thanks for melting me and see you soon.</h2>
+        </div>
+    </div>
+
+    <!-- BUY FORM OVERLAY -->
+    <div class="buy-overlay" id="buy-overlay">
+        <div class="buy-form-container">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <p style="margin-top:0; margin-bottom: 20px; font-weight: bold;">ACQUIRE PROTOCOL</p>
+            
+            <!-- UPDATE: Domain List Added Here -->
+            <div class="domain-list">
+                AVAILABLE UNITS:<br>
+                - SLOPARCHIVE.COM<br>
+                - SLOPOFFAME.COM<br>
+                - SLOPGALLERY.COM
+            </div>
+
+            <form action="https://formsubmit.co/nico@niccoloavanzi.com" method="POST" class="buy-form">
+                <!-- Honey pot to avoid spam -->
+                <input type="text" name="_honey" style="display:none">
+                <!-- Disable Captcha for cleaner look (optional, remove if you want captcha) -->
+                <input type="hidden" name="_captcha" value="false">
+                <!-- Redirect back to the site or a thank you page -->
+                <input type="hidden" name="_next" value="https://sloparchive.com">
+
+                <input type="email" name="email" placeholder="YOUR_EMAIL" required>
+                <textarea name="message" rows="4" placeholder="WHY_DO_YOU_WANT_THIS_DOMAIN?" required></textarea>
+                <button type="submit">TRANSMIT OFFER</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const body = document.body;
+        const wrapper = document.getElementById('content-wrapper');
+        const hero = document.querySelector('h1');
+        const consumeBtn = document.getElementById('consume-btn');
+        
+        const buyLink = document.getElementById('buy-link');
+        const buyOverlay = document.getElementById('buy-overlay');
+        const closeModal = document.getElementById('close-modal');
+        const finalMsg = document.getElementById('final-msg');
+
+        // Mouseover invert effect
+        hero.addEventListener('mouseover', () => {
+            if (wrapper.classList.contains('is-melting')) return;
+            body.style.backgroundColor = '#000000';
+            body.style.color = '#ffffff';
+            document.querySelector('.btn-minimal').style.borderColor = '#ffffff';
+            document.querySelector('.btn-minimal').style.color = '#ffffff';
+            // Also invert form link
+            document.querySelector('.footer-buy a').style.color = '#ffffff';
+            document.querySelector('.footer-buy a').style.borderColor = '#ffffff';
+        });
+
+        hero.addEventListener('mouseout', () => {
+            if (wrapper.classList.contains('is-melting')) return;
+            body.style.backgroundColor = '#f4f4f4';
+            body.style.color = '#000000';
+            document.querySelector('.btn-minimal').style.borderColor = '#000000';
+            document.querySelector('.btn-minimal').style.color = '#000000';
+            // Revert form link
+            document.querySelector('.footer-buy a').style.color = '#000000';
+            document.querySelector('.footer-buy a').style.borderColor = '#000000';
+        });
+
+        // MELTING Logic
+        consumeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Add the melting class to the WRAPPER instead of body
+            wrapper.classList.add('is-melting');
+            
+            // Wait for animation to finish (approx 5.5s) then show message
+            setTimeout(() => {
+                finalMsg.classList.add('visible');
+            }, 5500);
+
+            console.log("System Status: CRITICAL MELTDOWN INITIATED.");
+        });
+
+        // MODAL Logic
+        buyLink.addEventListener('click', () => {
+            buyOverlay.classList.add('visible');
+        });
+
+        closeModal.addEventListener('click', () => {
+            buyOverlay.classList.remove('visible');
+        });
+
+        // Close modal if clicking outside the box
+        buyOverlay.addEventListener('click', (e) => {
+            if (e.target === buyOverlay) {
+                buyOverlay.classList.remove('visible');
+            }
+        });
+
+    </script>
+
+</body>
+</html>
